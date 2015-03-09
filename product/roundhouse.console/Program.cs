@@ -300,6 +300,10 @@ namespace roundhouse.console
                 .Add("searchallinsteadoftraverse=|searchallsubdirectoriesinsteadoftraverse=",
                      "SearchAllSubdirectoriesInsteadOfTraverse - Each Migration folder's subdirectories are traversed by default. This option pulls back scripts from the main directory and all subdirectories at once. Defaults to 'false'",
                      option => configuration.SearchAllSubdirectoriesInsteadOfTraverse = option != null)
+                //dangerous script audit
+                .Add("dangerzone",
+                     "Allows Un-reviewed dangerous SQL scripts to be executed",
+                     option => configuration.DangerZone = option != null)
                 ;
 
             try
@@ -347,6 +351,7 @@ namespace roundhouse.console
                         "/baseline " +
                         "/dryrun " +
                         "/search[allsubdirectories]insteadoftraverse" +
+                        "/dangerzone" +
                         "]", Environment.NewLine);
                 show_help(usage_message, option_set);
             }

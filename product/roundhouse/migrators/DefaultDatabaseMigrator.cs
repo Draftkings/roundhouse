@@ -11,6 +11,7 @@ namespace roundhouse.migrators
     using infrastructure.logging;
     using sqlsplitters;
     using Environment = roundhouse.environments.Environment;
+    using System.Text.RegularExpressions;
 
     public sealed class DefaultDatabaseMigrator : DatabaseMigrator
     {
@@ -24,6 +25,7 @@ namespace roundhouse.migrators
         private readonly bool error_on_one_time_script_changes;
         private bool running_in_a_transaction;
         private readonly bool is_running_all_any_time_scripts;
+        private readonly bool is_dangerzone;
 
         public DefaultDatabaseMigrator(Database database, CryptographicService crypto_provider, ConfigurationPropertyHolder configuration)
         {
@@ -36,6 +38,7 @@ namespace roundhouse.migrators
             output_path = configuration.OutputPath;
             error_on_one_time_script_changes = !configuration.WarnOnOneTimeScriptChanges;
             is_running_all_any_time_scripts = configuration.RunAllAnyTimeScripts;
+            is_dangerzone = configuration.DangerZone;
         }
 
         public void initialize_connections()
@@ -176,6 +179,16 @@ namespace roundhouse.migrators
                 Log.bound_to(this).log_a_warning_event_containing("{0} is a one time script that has changed since it was run.", script_name);
             }
 
+            // Check for Dangerous scripts that have not been verified                
+            if (is_dangerous_unreviewed_script_found(sql_to_run) && !is_dangerzone)
+            {
+                database.rollback();
+                var error_message = string.Format("{0} contains dangerous statements and has not been reviewed. Stopping execution: ", script_name);
+                record_script_in_scripts_run_errors_table(script_name, sql_to_run, sql_to_run, error_message, repository_version, repository_path);
+                database.close_connection();
+                throw new Exception(error_message);
+            }
+
             if (this_is_an_environment_file_and_its_in_the_right_environment(script_name, environment)
                 && this_script_should_run(script_name, sql_to_run, run_this_script_once, run_this_script_every_time))
             {
@@ -206,6 +219,16 @@ namespace roundhouse.migrators
             }
 
             return this_sql_ran;
+        }
+
+        public bool is_dangerous_unreviewed_script_found(string sql_file_text)
+        {
+            // Danger code bits
+            var isDanger = Regex.IsMatch(sql_file_text, @"\sDROP\s|\sTRUNCATE\s", RegexOptions.IgnoreCase);
+            
+            var beenReviewed = Regex.IsMatch(sql_file_text, @"approved by\W?(\w)+", RegexOptions.IgnoreCase);
+
+            return isDanger && !beenReviewed;
         }
 
         public IEnumerable<string> get_statements_to_run(string sql_to_run)
