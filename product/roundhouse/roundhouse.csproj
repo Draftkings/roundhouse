@@ -87,6 +87,7 @@
       <HintPath>..\..\packages\structuremap.2.6.3\lib\StructureMap.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -130,6 +131,11 @@
     <Compile Include="parameters\AdoNetParameter.cs" />
     <Compile Include="parameters\IParameter.cs" />
     <Compile Include="Migrate.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="resolvers\ScriptfileVersionResolver.cs" />
     <Compile Include="resolvers\TextVersionResolver.cs" />
     <Compile Include="RoundhousEFluentNHibernateDiffingType.cs" />
@@ -215,8 +221,13 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
+    </None>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="targets\Microsoft.Application.targets" />
   </ItemGroup>
